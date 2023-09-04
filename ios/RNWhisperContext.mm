@@ -27,6 +27,14 @@
     self->recordState.dataFormat.mReserved = 0;
     self->recordState.dataFormat.mFormatFlags = kLinearPCMFormatFlagIsSignedInteger;
 
+    AVAudioSession * session = [AVAudioSession sharedInstance];
+
+    if (!session) printf("ERROR INITIALIZING AUDIO SESSION! \n");
+    else {
+        [session setCategory:AVAudioSessionCategoryPlayAndRecord error:&nsError];
+        [session setActive:YES error:&nsError];
+    }
+
     int maxAudioSecOpt = options[@"realtimeAudioSec"] != nil ? [options[@"realtimeAudioSec"] intValue] : 0;
     int maxAudioSec = maxAudioSecOpt > 0 ? maxAudioSecOpt : DEFAULT_MAX_AUDIO_SEC;
     self->recordState.maxAudioSec = maxAudioSec;
@@ -280,6 +288,15 @@ void AudioInputCallback(void * inUserData,
 
 - (void)stopAudio {
     AudioQueueStop(self->recordState.queue, true);
+    
+    AVAudioSession *session = [AVAudioSession sharedInstance];
+    NSError *sessionError;
+    [session setActive:NO error:&sessionError];
+    
+    if (sessionError) {
+        NSLog(@"Error deactivating AVAudioSession: %@", sessionError);
+    }
+
     for (int i = 0; i < NUM_BUFFERS; i++) {
         AudioQueueFreeBuffer(self->recordState.queue, self->recordState.buffers[i]);
     }
