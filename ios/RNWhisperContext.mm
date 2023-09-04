@@ -29,11 +29,22 @@
 
     AVAudioSession * session = [AVAudioSession sharedInstance];
 
-    if (!session) printf("ERROR INITIALIZING AUDIO SESSION! \n");
-    else {
+    if (!session) {
+        NSLog(@"[RNWhisper] AVAudioSession is not available");
+    } else {
+        NSError *nsError = nil;  // Declare NSError
         [session setCategory:AVAudioSessionCategoryPlayAndRecord error:&nsError];
+        if (nsError) {
+            NSLog(@"Error setting category: %@", nsError);
+            // Maybe handle this error or return?
+        }
         [session setActive:YES error:&nsError];
+        if (nsError) {
+            NSLog(@"Error activating session: %@", nsError);
+            // Maybe handle this error or return?
+        }
     }
+    
 
     int maxAudioSecOpt = options[@"realtimeAudioSec"] != nil ? [options[@"realtimeAudioSec"] intValue] : 0;
     int maxAudioSec = maxAudioSecOpt > 0 ? maxAudioSecOpt : DEFAULT_MAX_AUDIO_SEC;
@@ -292,7 +303,7 @@ void AudioInputCallback(void * inUserData,
     AVAudioSession *session = [AVAudioSession sharedInstance];
     NSError *sessionError;
     [session setActive:NO error:&sessionError];
-    
+
     if (sessionError) {
         NSLog(@"Error deactivating AVAudioSession: %@", sessionError);
     }
